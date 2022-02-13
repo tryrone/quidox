@@ -21,15 +21,15 @@ const HomeHeadCont = styled.div`
   }
 `;
 
-const HeadTitle = styled.p`
+export const HeadTitle = styled.p`
   font-family: Ubuntu;
   font-style: normal;
-  font-weight: bold;
+  font-weight: ${({ fontWeight }) => fontWeight || 'bold'};
   font-size: 14px;
   color: #000000;
 `;
 
-const HeadTitleWrap = styled.div`
+export const HeadTitleWrap = styled.div`
   padding: 0px 0px 14px 0px;
   border-bottom: 1px solid #eeeeee;
   margin-bottom: 23px;
@@ -41,12 +41,11 @@ const Padded = styled.div`
     display: none;
   }
 `;
-const AllBooksPadding = styled.div`
-  padding: 0px 52px;
-  margin-top: 65px;
-  @media (max-width: ${size.mobileL}) {
-    padding: 0px 20px;
-  }
+export const AllBooksPadding = styled.div`
+  padding: 20px 52px;
+  margin-top: ${({ mt }) => mt || '65px'};
+  background-color: white;
+  height: ${({ height }) => height || 'auto'};
 `;
 
 const SwiperPrevBtn = styled.div`
@@ -94,11 +93,11 @@ const SwiperNextBtn = styled.div`
 `;
 
 const ImageCard = styled.img`
-  height: 330px;
+  height: 324px;
   object-fit: contain;
   @media (max-width: ${size.mobileL}) {
-    height: 210px;
-    width: 140px;
+    height: 221px;
+    width: 134px;
   }
 `;
 
@@ -118,7 +117,7 @@ const Row = styled.div`
   justify-content: ${({jc}) => jc || 'initial'};
 `;
 
-const BooksRow = styled.div`
+export const BooksRow = styled.div`
   display: flex;
   padding-right: ${({pr}) => pr  || '0px'}};
   margin-top: ${({mt}) => mt  || '0px'}};
@@ -132,7 +131,7 @@ const BookWrap = styled.div`
   display: flex;
   cursor: pointer;
   align-items: center;
-  margin-top: 40px;
+  margin-top: ${({ mt }) => mt || '40px'};
   width: 30%;
   :hover {
     box-shadow: 0px 30px 60px rgba(0, 0, 0, 0.15);
@@ -143,9 +142,10 @@ const BookWrap = styled.div`
   @media (min-width: ${size.mobileL}) and (max-width: ${size.tablet}) {
     width: 100%;
   }
-  @media (min-width: ${size.mobileL}) and (max-width: ${size.laptop}) {
-    width: 40%;
+  @media (min-width: ${size.tablet}) and (max-width: ${size.laptop}) {
+    width: 50%;
   }
+
 `;
 
 const BookImage = styled.img`
@@ -196,10 +196,37 @@ const Fontmd = styled.p`
   margin-left: ${({ml}) => ml || '0px'};
 `;
 
+const BookPreviewOverlay = styled.div`
+  height: 99%;
+  width: 90%;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.607988) 0%, #000000 79.7%);
+  position: absolute;
+  top:0;
+  left:0;
+  @media (max-width: ${size.mobileL}) {
+   height: 89%;
+   width: 91%;
+   top:10px;
+  }
+  @media (min-width: ${size.laptopL}) {
+   height: 99%;
+   width: 92%;
+   top:0;
+  }
+  @media (min-width: ${size.laptopL}) and (max-width: ${size.desktop}) {
+   height: 99%;
+   width: 80%;
+   top:0;
+  }
+`;
+const BookPreviewWrap = styled.div`
+  position: relative;
+`;
 
-const BookItem = () => {
+
+export const BookItem = ({mt}) => {
   return (
-    <BookWrap>
+    <BookWrap mt={mt}>
       <BookImage src={require('../assets/images/ee.png')} />
       <Col>
         <BookTitle>The Effective Engineer</BookTitle>
@@ -239,9 +266,9 @@ const BookItem = () => {
           </Fontmd>
         </Row>
 
-        <Row mt="8px">
+        <Row mt="10px">
           <CartSvg />
-          <Fontmd ml="6px">Add to Cart</Fontmd>
+          <Fontmd fontWeight="bold" ml="6px">Add to Cart</Fontmd>
         </Row>
       </Col>
     </BookWrap>
@@ -259,18 +286,25 @@ const Home = () => {
       </Padded>
 
       <Carousel
-        cellSpacing={5}
+        cellSpacing={
+          width >= sizeInt.mobileL && width <= sizeInt.tablet ? 15 
+          : width >= sizeInt.laptopL && width <= sizeInt.desktop ? 100
+          : 5}
         initialSlideWidth={220}
         wrapAround
         autoplay
         slidesToShow={
-          width >= parseInt(sizeInt.laptopL)
+          width >= sizeInt.laptopL && width <= sizeInt.desktop
+            ? 7
+            : width >= parseInt(sizeInt.laptopL)
             ? 8
+            : width >= sizeInt.laptop && width <= sizeInt.laptopL
+            ? 4.5
             : width >= sizeInt.tablet && width <= sizeInt.laptopL
-            ? 5
+            ? 3
             : width >= sizeInt.mobileL && width <= sizeInt.tablet
-            ? 4
-            : 3
+            ? 2.3
+            : 2.5
         }
         slidesToScroll={1}
         renderCenterLeftControls={({ previousSlide }) => (
@@ -284,14 +318,43 @@ const Home = () => {
           </SwiperNextBtn>
         )}
       >
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        <BookPreviewWrap>
+          <ImageCard src={require('../assets/images/ee.png')} />
+        </BookPreviewWrap>
+        {/* <ImageCard src={require('../assets/images/ee.png')} />
         <ImageCard src={require('../assets/images/ee.png')} />
         <ImageCard src={require('../assets/images/ee.png')} />
         <ImageCard src={require('../assets/images/ee.png')} />
         <ImageCard src={require('../assets/images/ee.png')} />
         <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} />
+        <ImageCard src={require('../assets/images/ee.png')} /> */}
       </Carousel>
 
       <AllBooksPadding>

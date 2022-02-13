@@ -1,11 +1,13 @@
 import { BookProvider } from "./context/BookContext";
-import Content from "./pages/Content";
+import Pages from './pages';
+
 
 function App() {
   return (
-    <BookProvider>
-      <Content />
-    </BookProvider>
+   
+      <BookProvider>
+        <Pages />
+      </BookProvider>
   );
 }
 

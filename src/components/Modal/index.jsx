@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import styled from 'styled-components';
 import { ReactComponent as Search } from '../../assets/svgs/search.svg';
 import { ReactComponent as CloseSvg } from '../../assets/svgs/close.svg';
@@ -9,6 +9,9 @@ import { ReactComponent as ArrowSvg } from '../../assets/svgs/arrow.svg';
 import {gsap} from 'gsap';
 import { size } from '../../utils/constants';
 import {Checkoutbtn} from '../Buttons/index';
+import { AllBooksPadding, BookItem, BooksRow, HeadTitle, HeadTitleWrap } from '../../pages/Home';
+import { BookContext } from '../../context/BookContext';
+import NavBar from '../NavBar';
 
 const MobileModal = styled.div`
   position: fixed;
@@ -22,6 +25,22 @@ const MobileModal = styled.div`
   background-color: rgb(0, 0, 0);
   background-color: rgba(0, 0, 0, 0.4);
   @media (min-width: ${size.tablet}) {
+    display:none;
+  }
+`;
+
+const WebModal = styled.div`
+  position: fixed;
+  display: ${({ visible }) => (visible ? 'block' : 'none')};
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(255, 255, 255);
+  background-color: rgba(255, 255, 255, 0);
+  @media (max-width: ${size.tablet}) {
     display:none;
   }
 `;
@@ -42,7 +61,7 @@ const CartModalWrap = styled.div`
 `;
 
 const SearchWrap = styled.div`
-  width: 89%;
+  width: 90%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -50,8 +69,12 @@ const SearchWrap = styled.div`
   background: #ffffff;
   border: 1px solid #eeeeee;
   box-shadow: 0px 0px 40px rgba(0, 0, 0, 0.05);
+  position: fixed;
   @media (min-width: ${size.mobileL}) and (max-width: ${size.tablet}) {
-    width: 95%;
+    width: 91%;
+  }
+  @media (max-width: ${size.mobileM}) {
+    width: 89%;
   }
 `;
 
@@ -128,6 +151,7 @@ const SearchBtn = styled.button`
   padding-right: 12px;
   height: 40px;
   outline: none;
+  cursor:pointer;
 `;
 
 const BackText = styled.p`
@@ -268,6 +292,7 @@ const SubtotalWrap = styled.div`
 
 export const SearchModal = ({visible,setVisible}) => {
   const header = React.createRef();
+  const { searchText, setSearchText } = useContext(BookContext);
 
 
   useEffect(() => {
@@ -287,16 +312,69 @@ export const SearchModal = ({visible,setVisible}) => {
         <ArrowWrap onClick={handleClose} />
 
         <Row width="80%">
-          <WebSearchInput placeholder="Books, genres, authors, etc." />
-          <SearchBtn>
-            <Search />
-            {/* <CloseSvg /> */}
-          </SearchBtn>
+          <WebSearchInput
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="Books, genres, authors, etc."
+          />
+          <SearchBtn onClick={() => setSearchText('')} >{searchText ? <CloseSvg /> : <Search />}</SearchBtn>
         </Row>
       </SearchWrap>
+
+      {searchText && (
+        <AllBooksPadding ptL="90px" height="100%" mt="0px" mtm="0px" ptm="90px">
+          <HeadTitleWrap>
+            <HeadTitle fontWeight="normal">
+              <span style={{ fontWeight: 'bold' }}>3 results </span> found for{' '}
+              <span style={{ fontWeight: 'bold' }}>
+                `four steps to the epiph`
+              </span>
+            </HeadTitle>
+          </HeadTitleWrap>
+
+          <BooksRow jc="space-between" wrap>
+            <BookItem mt="0px" />
+            <BookItem />
+            <BookItem />
+          </BooksRow>
+        </AllBooksPadding>
+      )}
     </MobileModal>
   );
 }
+
+export const WebSearchModal = ({ visible }) => {
+  const content = React.createRef();
+  const { searchText } = useContext(BookContext);
+
+  useEffect(() => {
+    gsap.fromTo(content.current, { y: 1000 }, { y: 0 });
+  }, [visible]);
+
+  return (
+    <WebModal visible={visible}> 
+    <NavBar />
+      {searchText && (
+        <AllBooksPadding ref={content} ptL="90px" height="100%" mt="70px" mtm="0px" ptm="90px">
+          <HeadTitleWrap>
+            <HeadTitle fontWeight="normal">
+              <span style={{ fontWeight: 'bold' }}>3 results </span> found for{' '}
+              <span style={{ fontWeight: 'bold' }}>
+                `four steps to the epiph`
+              </span>
+            </HeadTitle>
+          </HeadTitleWrap>
+
+          <BooksRow jc="space-between" wrap>
+            <BookItem mt="0px" />
+            <BookItem />
+            <BookItem />
+          </BooksRow>
+        </AllBooksPadding>
+      )}
+    </WebModal>
+  );
+};
 
 const CartItem = () => {
   return (

@@ -5,6 +5,7 @@ export const BookContext = React.createContext({});
 export const BookProvider = ({children}) => {
     const [searchModal,setSearchModal] = useState(false);
     const [cartModal,setCartModal] = useState(false);
+    const [searchText,setSearchText] = useState('');
 
   return (
     <BookContext.Provider
@@ -13,6 +14,8 @@ export const BookProvider = ({children}) => {
         setSearchModal,
         cartModal,
         setCartModal,
+        searchText,
+        setSearchText,
       }}
     >
       {children}
