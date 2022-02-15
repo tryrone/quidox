@@ -14,7 +14,7 @@ const NavWrapper = styled.nav`
   padding: 25px 40px;
   box-shadow: 0px 0px 40px rgba(0, 0, 0, 0.05);
   border: 1px solid #eeeeee;
-  position: fixed;
+  position: ${({ position }) => position || 'fixed'};
   width: 96%;
   background: #ffffff;
   display: flex;
@@ -24,7 +24,7 @@ const NavWrapper = styled.nav`
   z-index: 3;
   top: 0;
   @media (max-width: ${size.mobileL}) {
-    padding: 15px; 
+    padding: 15px;
     width: 92%;
   }
   @media (min-width: ${size.mobileL}) and (max-width: ${size.tablet}) {
@@ -168,11 +168,12 @@ const MobileSearch = styled(Search)`
 
 
 
-const NavBar = () => {
-  const { setSearchModal, setCartModal, searchText,setSearchText, cartData } = useContext(BookContext);
-  
+const NavBar = ({ position, autoFocus }) => {
+  const { setSearchModal, setCartModal, searchText, setSearchText, cartData } =
+    useContext(BookContext);
+
   return (
-    <NavWrapper>
+    <NavWrapper position={position}>
       <Link to="/">
         <Row cursor="pointer">
           <Logo />
@@ -186,8 +187,9 @@ const NavBar = () => {
       <SearchWrap>
         <Row width="70%">
           <WebSearchInput
-            // value={searchText}
-            // onChange={(e) => setSearchText(e.target.value)}
+            value={searchText}
+            autoFocus={autoFocus || false}
+            onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search books, genres, authors, etc."
           />
           <SearchBtn onClick={() => setSearchText('')}>
@@ -214,6 +216,6 @@ const NavBar = () => {
       </Row>
     </NavWrapper>
   );
-}
+};
 
 export default NavBar

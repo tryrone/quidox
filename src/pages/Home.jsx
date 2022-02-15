@@ -52,9 +52,16 @@ const Padded = styled.div`
 `;
 export const AllBooksPadding = styled.div`
   padding: 20px 52px;
+
+  
+
+
   margin-top: ${({ mt }) => mt || '65px'};
+  
   background-color: white;
   height: ${({ height }) => height || 'auto'};
+
+  
 
   @media (max-width: ${size.mobileL}) {
     padding: 0px 19px;
@@ -80,7 +87,7 @@ const SwiperPrevBtn = styled.div`
   mix-blend-mode: normal;
   opacity: 0.8;
   @media (max-width: ${size.mobileL}) {
-    height: 210px;
+    height: 230px;
   }
 `;
 
@@ -102,12 +109,13 @@ const SwiperNextBtn = styled.div`
   justify-content: center;
   align-items: center;
   @media (max-width: ${size.mobileL}) {
-    height: 210px;
+    height: 230px;
   }
 `;
 
 const ImageCard = styled.img`
   height: 324px;
+  width: auto;
   object-fit: cover;
   @media (max-width: ${size.mobileL}) {
     height: 221px;
@@ -141,7 +149,7 @@ export const BooksRow = styled.div`
   justify-content: ${({jc}) => jc || 'initial'};
 `;
 
-const BookWrap = styled.div`
+export const BookWrap = styled.div`
   display: flex;
   cursor: pointer;
   align-items: center;
@@ -210,36 +218,7 @@ const Fontmd = styled.p`
   margin-left: ${({ml}) => ml || '0px'};
 `;
 
-// const BookPreviewOverlay = styled.div`
-//   height: 99%;
-//   width: 90%;
-//   background: linear-gradient(180deg, rgba(0, 0, 0, 0.607988) 0%, #000000 79.7%);
-//   position: absolute;
-//   top:0;
-//   left:0;
-//   @media (max-width: ${size.mobileL}) {
-//    height: 89%;
-//    width: 91%;
-//    top:10px;
-//   }
-//   @media (min-width: ${size.laptopL}) {
-//    height: 99%;
-//    width: 92%;
-//    top:0;
-//   }
-//   @media (min-width: ${size.laptopL}) and (max-width: ${size.desktop}) {
-//    height: 99%;
-//    width: 80%;
-//    top:0;
-//   }
-// `;
-
-// const BookPreviewWrap = styled.div`
-//   position: relative;
-// `;
-
-
-export const BookItem = ({mt,data}) => {
+export const BookItem = ({ mt, data, handleClose }) => {
   const {
     image_url,
     title,
@@ -257,69 +236,74 @@ export const BookItem = ({mt,data}) => {
 
   const publishedDate = new Date(published_at);
 
-  const actualCopiesAvailable = parseInt(available_copies) - availableCopiesAfterAddedToCart(cartData,data);
-
+  const actualCopiesAvailable =
+    parseInt(available_copies) -
+    availableCopiesAfterAddedToCart(cartData, data);
 
   return (
     <BookWrap mt={mt}>
       <Link to={`/details/${data.id}`}>
-        <BookImage src={image_url} />
+        <div onClick={() => handleClose && handleClose()}>
+          <BookImage src={image_url} />
+        </div>
       </Link>
 
-      <Link to={`/details/${data.id}`}>
+      <div onClick={() => handleClose && handleClose()}>
         <Col>
-          <BookTitle>{title}</BookTitle>
-          <BookAuthor mt="6px">
-            {authors.map(
-              (author, index) =>
-                `${author?.name} ${index === authors.length - 1 ? '' : ' ,'}`
-            )}{' '}
-            - {publishedDate.getFullYear()}
-          </BookAuthor>
-          <BookAuthor>
-            {genres.map(
-              (genre, index) =>
-                `${genre?.name} ${index === genres.length - 1 ? '' : ' ,'}`
-            )}
-          </BookAuthor>
+          <Link to={`/details/${data.id}`}>
+            <BookTitle>{title}</BookTitle>
+            <BookAuthor mt="6px">
+              {authors.map(
+                (author, index) =>
+                  `${author?.name} ${index === authors.length - 1 ? '' : ' ,'}`
+              )}{' '}
+              - {publishedDate.getFullYear()}
+            </BookAuthor>
+            <BookAuthor>
+              {genres.map(
+                (genre, index) =>
+                  `${genre?.name} ${index === genres.length - 1 ? '' : ' ,'}`
+              )}
+            </BookAuthor>
 
-          <Row mt="12px">
-            <Row br pr="14px">
-              <Col>
-                <PeopleSvg />
-                <Fontmd>{number_of_purchases}</Fontmd>
-              </Col>
+            <Row mt="12px">
+              <Row br pr="14px">
+                <Col>
+                  <PeopleSvg />
+                  <Fontmd>{number_of_purchases}</Fontmd>
+                </Col>
 
-              <Col>
-                <HeartSvg />
-                <Fontmd>{likes}</Fontmd>
+                <Col>
+                  <HeartSvg />
+                  <Fontmd>{likes}</Fontmd>
+                </Col>
+              </Row>
+
+              <Col ml="10px">
+                <Fontmd textAlign="left">Rating:{rating} </Fontmd>
+                <StarRatings
+                  rating={rating}
+                  starRatedColor="#EBA430"
+                  numberOfStars={5}
+                  starDimension={'15px'}
+                  starSpacing="2px"
+                  name="rating"
+                />
               </Col>
             </Row>
 
-            <Col ml="10px">
-              <Fontmd textAlign="left">Rating:{rating} </Fontmd>
-              <StarRatings
-                rating={rating}
-                starRatedColor="#EBA430"
-                numberOfStars={5}
-                starDimension={'15px'}
-                starSpacing="2px"
-                name="rating"
-              />
-            </Col>
-          </Row>
-
-          <Row mt="13px">
-            <Fontmd>${price}</Fontmd>
-            <Fontmd
-              ml="6px"
-              color={actualCopiesAvailable !== 0 ? '#65C100' : ' #C12300'}
-            >
-              {actualCopiesAvailable !== 0
-                ? `${actualCopiesAvailable} Copies Available`
-                : 'Out of stock'}
-            </Fontmd>
-          </Row>
+            <Row mt="13px">
+              <Fontmd>${price}</Fontmd>
+              <Fontmd
+                ml="6px"
+                color={actualCopiesAvailable !== 0 ? '#65C100' : ' #C12300'}
+              >
+                {actualCopiesAvailable !== 0
+                  ? `${actualCopiesAvailable} Copies Available`
+                  : 'Out of stock'}
+              </Fontmd>
+            </Row>
+          </Link>
 
           {actualCopiesAvailable !== 0 && (
             <Row
@@ -334,7 +318,7 @@ export const BookItem = ({mt,data}) => {
             </Row>
           )}
         </Col>
-      </Link>
+      </div>
     </BookWrap>
   );
 };
@@ -362,15 +346,13 @@ const Home = () => {
               width >= sizeInt.mobileL && width <= sizeInt.tablet
                 ? 15
                 : width >= sizeInt.laptopL && width <= sizeInt.desktop
-                ? 100
+                ? 10
                 : 5
             }
-            initialSlideWidth={220}
-            wrapAround
             autoplay
             slidesToShow={
               width >= sizeInt.laptopL && width <= sizeInt.desktop
-                ? 7
+                ? 5
                 : width >= parseInt(sizeInt.laptopL)
                 ? 8
                 : width >= sizeInt.laptop && width <= sizeInt.laptopL
@@ -395,7 +377,9 @@ const Home = () => {
           >
             {data?.books?.map((book) => {
               return (
-                <ImageCard key={book.id + 'featured'} src={book.image_url} />
+                <Link style={{display:'inline-block'}} to={`/details/${book.id}`}>
+                  <ImageCard key={book.id + 'featured'} src={book.image_url}/>
+                </Link>
               );
             })}
           </Carousel>

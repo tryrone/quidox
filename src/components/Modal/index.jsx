@@ -9,7 +9,7 @@ import { ReactComponent as ArrowSvg } from '../../assets/svgs/arrow.svg';
 import {gsap} from 'gsap';
 import { size } from '../../utils/constants';
 import {Checkoutbtn} from '../Buttons/index';
-import { AllBooksPadding, BookItem, BooksRow, HeadTitle, HeadTitleWrap } from '../../pages/Home';
+import { AllBooksPadding, BookItem, BooksRow, BookWrap, HeadTitle, HeadTitleWrap } from '../../pages/Home';
 import { BookContext } from '../../context/BookContext';
 import NavBar from '../NavBar';
 import { availableCopiesAfterAddedToCart, removeFromCart } from '../../utils/helpers';
@@ -23,8 +23,8 @@ const MobileModal = styled.div`
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgb(0, 0, 0);
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: ${({showWHiteBg}) => showWHiteBg ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)'};
+  background-color: ${({showWHiteBg}) => showWHiteBg ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0.4)'} ;
   @media (min-width: ${size.tablet}) {
     display:none;
   }
@@ -40,7 +40,7 @@ const WebModal = styled.div`
   height: 100%;
   overflow: auto;
   background-color: rgb(255, 255, 255);
-  background-color: rgba(255, 255, 255, 0);
+  background-color: rgba(255, 255, 255, 1);
   @media (max-width: ${size.tablet}) {
     display:none;
   }
@@ -292,10 +292,21 @@ const SubtotalWrap = styled.div`
     margin-top: 38px;
 `;
 
+const Wrapper = styled.div`
+  max-width: 1140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0px auto;
+  height: 100%;
+`;
+
 
 export const SearchModal = ({visible,setVisible}) => {
   const header = React.createRef();
-  const { searchText, setSearchText } = useContext(BookContext);
+  const alwaysOpen = true;
+  const { searchText, setSearchText, bookData } = useContext(BookContext);
+
 
 
   useEffect(() => {
@@ -304,76 +315,133 @@ export const SearchModal = ({visible,setVisible}) => {
 
   const handleClose = () => {
      gsap.fromTo(header.current, { y: 0 },{y:-100});
-     setTimeout(()=>{
-      setVisible(false);
-     },400);
+     setVisible(false);
+  }
+
+  const filteredBooks = applyFilters(bookData) || [];
+
+
+  function applyFilters(books) {
+      const tagFilter = books?.filter((k) => k?.tags.some((d) =>  d.name.toLowerCase().includes(searchText))) || [];
+      const authorFilter = books?.filter((k) => k?.authors.some((d) =>  d.name.toLowerCase().includes(searchText))) || [];
+      const genreFilter = books?.filter((k) => k?.genres.some((d) =>  d.name.toLowerCase().includes(searchText))) || [];
+      const titleFilter = books?.filter(k => k?.title.toLowerCase().includes(searchText)) || [];
+
+     const removedDuplicates = [...tagFilter, ...authorFilter, ...genreFilter, ...titleFilter].filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
+      return removedDuplicates;
   }
 
   return (
-    <MobileModal visible={visible}>
+    <MobileModal showWHiteBg={searchText ? true : false} visible={visible}>
       <SearchWrap ref={header}>
         <ArrowWrap onClick={handleClose} />
 
         <Row width="80%">
           <WebSearchInput
-            // value={searchText}
-            // onChange={(e) => setSearchText(e.target.value)}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
             placeholder="Books, genres, authors, etc."
           />
-          <SearchBtn onClick={() => setSearchText('')} >{searchText ? <CloseSvg /> : <Search />}</SearchBtn>
+          <SearchBtn onClick={() => setSearchText('')}>
+            {searchText ? <CloseSvg /> : <Search />}
+          </SearchBtn>
         </Row>
       </SearchWrap>
 
-      {searchText && (
-        <AllBooksPadding ptL="90px" height="100%" mt="0px" mtm="0px" ptm="90px">
-          <HeadTitleWrap>
-            <HeadTitle fontWeight="normal">
-              <span style={{ fontWeight: 'bold' }}>3 results </span> found for{' '}
-              <span style={{ fontWeight: 'bold' }}>
-                `four steps to the epiph`
-              </span>
-            </HeadTitle>
-          </HeadTitleWrap>
+      {searchText && alwaysOpen && (
+        <Wrapper>
+          <AllBooksPadding
+            ptL="90px"
+            height="100%"
+            mt="0px"
+            mtm="0px"
+            ptm="90px"
+          >
+            <HeadTitleWrap>
+              <HeadTitle fontWeight="normal">
+                <span style={{ fontWeight: 'bold' }}>3 results </span> found for{' '}
+                <span style={{ fontWeight: 'bold' }}>
+                  `four steps to the epiph`
+                </span>
+              </HeadTitle>
+            </HeadTitleWrap>
 
-          <BooksRow jc="space-between" wrap>
-            <BookItem mt="0px" />
-            <BookItem />
-            <BookItem />
-          </BooksRow>
-        </AllBooksPadding>
+            <BooksRow jc="space-between" wrap>
+              {filteredBooks.map((f, index) => (
+                <BookItem
+                  mt="40px"
+                  data={f}
+                  key={index + 'search'}
+                  handleClose={handleClose}
+                />
+              ))}
+            </BooksRow>
+          </AllBooksPadding>
+        </Wrapper>
       )}
     </MobileModal>
   );
 }
 
-export const WebSearchModal = ({ visible }) => {
+export const WebSearchModal = ({ visible, setVisible }) => {
   const content = React.createRef();
-  const { searchText } = useContext(BookContext);
+  const { searchText, bookData } = useContext(BookContext);
+  const alwaysOpen = true;
 
   useEffect(() => {
     gsap.fromTo(content.current, { y: 1000 }, { y: 0 });
   }, [visible]);
 
-  return (
-    <WebModal visible={visible}> 
-    <NavBar />
-      {searchText && (
-        <AllBooksPadding ref={content} ptL="90px" height="100%" mt="70px" mtm="0px" ptm="90px">
-          <HeadTitleWrap>
-            <HeadTitle fontWeight="normal">
-              <span style={{ fontWeight: 'bold' }}>3 results </span> found for{' '}
-              <span style={{ fontWeight: 'bold' }}>
-                `four steps to the epiph`
-              </span>
-            </HeadTitle>
-          </HeadTitleWrap>
+  const handleClose = () => {
+    setTimeout(() => {
+      setVisible(false);
+    }, 400);
+  };
 
-          <BooksRow jc="space-between" wrap>
-            <BookItem mt="0px" />
-            <BookItem />
-            <BookItem />
-          </BooksRow>
-        </AllBooksPadding>
+  const filteredBooks = applyFilters(bookData) || [];
+
+
+  function applyFilters(books) {
+      const tagFilter = books?.filter((k) => k?.tags.some((d) =>  d.name.toLowerCase().includes(searchText))) || [];
+      const authorFilter = books?.filter((k) => k?.authors.some((d) =>  d.name.toLowerCase().includes(searchText))) || [];
+      const genreFilter = books?.filter((k) => k?.genres.some((d) =>  d.name.toLowerCase().includes(searchText))) || [];
+      const titleFilter = books?.filter(k => k?.title.toLowerCase().includes(searchText)) || [];
+
+     const removedDuplicates = [...tagFilter, ...authorFilter, ...genreFilter, ...titleFilter].filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
+      return removedDuplicates;
+  }
+
+
+  return (
+    <WebModal visible={visible}>
+      <NavBar autoFocus={true} position="relative" />
+      {searchText && alwaysOpen && (
+        <Wrapper>
+          <AllBooksPadding
+            ref={content}
+            ptL="0px"
+            height="100%"
+            mt="0px"
+            mtm="0px"
+            ptm="90px"
+          >
+            <HeadTitleWrap>
+              <HeadTitle fontWeight="normal">
+                <span style={{ fontWeight: 'bold' }}>{filteredBooks.length} results </span> found for{' '}
+                <span style={{ fontWeight: 'bold' }}>
+                  `{searchText}`
+                </span>
+              </HeadTitle>
+            </HeadTitleWrap>
+
+            <BooksRow jc="space-between" wrap>
+              {filteredBooks.map((f,index) => (
+                <BookItem mt="40px" data={f} key={index + 'search'} handleClose={handleClose} />
+              ))}
+              <BookWrap mt="0px" />
+            </BooksRow>
+          </AllBooksPadding>
+        </Wrapper>
       )}
     </WebModal>
   );
@@ -385,7 +453,7 @@ const CartItem = ({data,index}) => {
 
   return (
     <CartItemWrap>
-      <Row width="40%" alignItems="inital" jc="space-between">
+      <Row width="27%" alignItems="inital" jc="space-between">
         <CartImage src={image_url} />
         <Col jc="space-between">
           <Col>
@@ -482,11 +550,7 @@ export const CartModal = ({visible,setVisible}) => {
      });
      const sum = individualSums.reduce((a, b) => a + b);
     return sum.toFixed(2);
-  }
-
-  
-
-  
+  }  
 
   return (
     <CartModalWrap visible={visible}>
