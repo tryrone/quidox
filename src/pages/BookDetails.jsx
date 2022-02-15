@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import styled from 'styled-components';
 import {ReactComponent as ArrowSvg} from '../assets/svgs/arrow.svg';
 import { ReactComponent as PeopleSvg } from '../assets/svgs/people.svg';
@@ -6,7 +6,13 @@ import { ReactComponent as HeeartSvg } from '../assets/svgs/heart.svg';
 import {AddToCartBtn} from '../components/Buttons';
 import { size } from '../utils/constants';
 import StarRatings from 'react-star-ratings';
+import {Query} from 'react-apollo';
+import {GET_BOOK} from '../graphql/queries';
+import { useParams, Link } from 'react-router-dom';
 import { ReactComponent as CartSvg } from '../assets/svgs/cartWhite.svg';
+import { addToCart, availableCopiesAfterAddedToCart, returnArrayText } from '../utils/helpers';
+import { BookContext } from '../context/BookContext';
+import moment from 'moment';
 
 const DetailCont = styled.div`
    margin-top: 100px;
@@ -163,8 +169,10 @@ const DescriptionText = styled.p`
   color: #000000;
   margin-top: 12px;
   line-height: 150%;
+  margin-bottom: 100px;
   @media (max-width: ${size.mobileXL}) {
     margin-top: 7px;
+    margin-bottom: 100px;
   }
 `;
 const AddToCartBtnWrap = styled.button`
@@ -187,142 +195,159 @@ const AddToCartBtnWrap = styled.button`
 
 
 const BookDetails = () => {
+  const params = useParams();
+  const { cartData, setCartData } = useContext(BookContext);
+  const {id} = params;
   return (
-    <DetailCont>
-      <Row cursor>
-        <ArrowSvg />
-        <Font12 ml="5px" fontWeight="bold">
-          Back
-        </Font12>
-      </Row>
+    <Query variables={{id}} query={GET_BOOK}>
+      {({ loading, error, data }) => {
+       
+        const {
+          image_url,
+          title,
+          subtitle,
+          rating,
+          full_description,
+          price,
+          available_copies,
+          likes,
+          number_of_purchases,
+          published_at,
+          authors,
+          release_date,
+          genres,
+          tags,
+          publisher,
+        } = data?.book || {};
 
-      <DetailRow wrap mt="38px" alignItems="initial">
-        <BookCol>
-          <BookCoverImage src={require('../assets/images/ee.png')} />
-          <Font14 mt="73px" mHide color="#65C100">
-            23 Copies Available
-          </Font14>
-          <Font36 mHide fontWeight="300">
-            $29.99
-          </Font36>
+    
+        const actualCopiesAvailable = parseInt(available_copies) - availableCopiesAfterAddedToCart(cartData,data?.book);
+        const publishedDate = new Date(published_at);
 
-          <AddToCartBtn />
-        </BookCol>
 
-        <DetailCol>
-          <Font36 fontWeight="bold">
-            Big Magic: Creative Living Beyond Fear
-          </Font36>
-          <Col>
-            <Font14 fontWeight="bold" mt="20px">
-              Elizabeth Gilbert
-            </Font14>
-            <Font14 mt="7px">2016</Font14>
-          </Col>
-
-          <Row wrap justifyContent="space-between" mt="27px">
-            <Row br pr="14px">
-              <DetailColItem>
-                <PeopleSvg />
-                <Font12 textAlign="center" mt="7px">
-                  31
+        return loading && error ? (
+          <></>
+        ) : (
+          <DetailCont>
+            <Link to="/">
+              <Row>
+                <ArrowSvg />
+                <Font12 ml="5px" fontWeight="bold">
+                  Back
                 </Font12>
-              </DetailColItem>
-              <DetailColItem>
-                <HeeartSvg />
-                <Font12 textAlign="center" mt="7px">
-                  29
-                </Font12>
-              </DetailColItem>
-            </Row>
+              </Row>
+            </Link>
 
-            <DetailColItem mt="10px">
-              <Font14>
-                <span style={{ fontWeight: 'bold' }}>Ratings:</span> 4.0
-              </Font14>
-              <StarRatings
-                rating={4}
-                starRatedColor="#EBA430"
-                numberOfStars={5}
-                starDimension={'15px'}
-                starSpacing="2px"
-                name="rating"
-              />
-            </DetailColItem>
-            <DetailColItem mt="10px">
-              <Font14 fontWeight="bold">Genre</Font14>
-              <Font14>Motivational</Font14>
-            </DetailColItem>
-            <DetailColItem mt="10px">
-              <Font14 fontWeight="bold">Tags</Font14>
-              <Font14>Creativity, Better Living</Font14>
-            </DetailColItem>
-            <DetailColItem mt="10px">
-              <Font14 fontWeight="bold">Publisher</Font14>
-              <Font14>Savannah Books</Font14>
-            </DetailColItem>
-            <DetailColItem mt="10px">
-              <Font14 fontWeight="bold">Released</Font14>
-              <Font14>21 January, 2016</Font14>
-            </DetailColItem>
-          </Row>
+            <DetailRow wrap mt="38px" alignItems="initial">
+              <BookCol>
+                <BookCoverImage src={image_url} />
+                <Font14 mt="73px" mHide color={actualCopiesAvailable !==0 ? "#65C100" :"#C12300"}>
+                 {actualCopiesAvailable !== 0 ? `${actualCopiesAvailable} Copies Available` : 'out of stock'}
+                </Font14>
+                <Font36 mHide fontWeight="300">
+                  ${price}
+                </Font36>
 
-          <SubtitleText>The instant #1 NEW YORK TIMES Bestseller </SubtitleText>
-          <DescriptionText>
-            The instant #1 NEW YORK TIMES Bestseller "A must read for anyone
-            hoping to live a creative life... I dare you not to be inspired to
-            be brave, to be free, and to be curious.” —PopSugar From the
-            worldwide bestselling author of Eat Pray Love and City of Girls: the
-            path to the vibrant, fulfilling life you’ve dreamed of. Readers of
-            all ages and walks of life have drawn inspiration and empowerment
-            from Elizabeth Gilbert’s books for years. Now this beloved author
-            digs deep into her own generative process to share her wisdom and
-            unique perspective about creativity. With profound empathy and
-            radiant generosity, she offers potent insights into the mysterious
-            nature of inspiration. She asks us to embrace our curiosity and let
-            go of needless suffering. She shows us how to tackle what we most
-            love, and how to face down what we most fear. She discusses the
-            attitudes, approaches, and habits we need in order to live our most
-            creative lives. Balancing between soulful spirituality and cheerful
-            pragmatism, Gilbert encourages us to uncover the “strange jewels”
-            that are hidden within each of us. Whether we are looking to write a
-            book, make art, find new ways to address challenges in our work,
-            embark on a dream long deferred, or simply infuse our everyday lives
-            with more mindfulness and passion, Big Magic cracks open a world of
-            wonder and joy. "A must read for anyone hoping to live a creative
-            life... I dare you not to be inspired to be brave, to be free, and
-            to be curious.” —PopSugar From the worldwide bestselling author of
-            Eat Pray Love and City of Girls: the path to the vibrant, fulfilling
-            life you’ve dreamed of. Readers of all ages and walks of life have
-            drawn inspiration and empowerment from Elizabeth Gilbert’s books for
-            years. Now this beloved author digs deep into her own generative
-            process to share her wisdom and unique perspective about creativity.
-            With profound empathy and radiant generosity, she offers potent
-            insights into the mysterious nature of inspiration. She asks us to
-            embrace our curiosity and let go of needless suffering. She shows us
-            how to tackle what we most love, and how to face down what we most
-            fear. She discusses the attitudes, approaches, and habits we need in
-            order to live our most creative lives. Balancing between soulful
-            spirituality and cheerful pragmatism, Gilbert encourages us to
-            uncover the “strange jewels” that are hidden within each of us.
-            Whether we are looking to write a book, make art, find new ways to
-            address challenges in our work, embark on a dream long deferred, or
-            simply infuse our everyday lives with more mindfulness and passion,
-            Big Magic cracks open a world of wonder and joy.
-          </DescriptionText>
-        </DetailCol>
-      </DetailRow>
-      <AddToCartBtnWrap>
-        <CartSvg />
-        <Col>
-          <Font12 fontWeight="bold" color="white">
-            Add to Cart
-          </Font12>
-          <Font12 color="#65C100">23 Copies Available</Font12>
-        </Col>
-        <Font28 fontWeight="300" color="white">$29.99</Font28>
-      </AddToCartBtnWrap>
-    </DetailCont>
+                {actualCopiesAvailable !== 0 && (
+                  <AddToCartBtn
+                    onClick={() => addToCart(data.book || {}, cartData, setCartData)}
+                  />
+                )}
+              </BookCol>
+
+              <DetailCol>
+                <Font36 fontWeight="bold">{title}</Font36>
+                <Col>
+                  <Font14 fontWeight="bold" mt="20px">
+                    {authors &&
+                      authors.map(
+                        (author, index) =>
+                          `${author?.name} ${
+                            index === authors?.length - 1 ? '' : ' ,'
+                          }`
+                      )}
+                  </Font14>
+                  <Font14 mt="7px">{publishedDate.getFullYear()}</Font14>
+                </Col>
+
+                <Row wrap justifyContent="space-between" mt="27px">
+                  <Row br pr="14px">
+                    <DetailColItem>
+                      <PeopleSvg />
+                      <Font12 textAlign="center" mt="7px">
+                        {number_of_purchases}
+                      </Font12>
+                    </DetailColItem>
+                    <DetailColItem>
+                      <HeeartSvg />
+                      <Font12 textAlign="center" mt="7px">
+                        {likes}
+                      </Font12>
+                    </DetailColItem>
+                  </Row>
+
+                  <DetailColItem mt="10px">
+                    <Font14>
+                      <span style={{ fontWeight: 'bold' }}>Ratings:</span>{' '}
+                      {rating}
+                    </Font14>
+                    <StarRatings
+                      rating={rating}
+                      starRatedColor="#EBA430"
+                      numberOfStars={5}
+                      starDimension={'15px'}
+                      starSpacing="2px"
+                      name="rating"
+                    />
+                  </DetailColItem>
+                  <DetailColItem mt="10px">
+                    <Font14 fontWeight="bold">Genre</Font14>
+                    <Font14>{returnArrayText(genres || [])}</Font14>
+                  </DetailColItem>
+                  <DetailColItem mt="10px">
+                    <Font14 fontWeight="bold">Tags</Font14>
+                    <Font14>{returnArrayText(tags || [])}</Font14>
+                  </DetailColItem>
+                  <DetailColItem mt="10px">
+                    <Font14 fontWeight="bold">Publisher</Font14>
+                    <Font14>{publisher}</Font14>
+                  </DetailColItem>
+                  <DetailColItem mt="10px">
+                    <Font14 fontWeight="bold">Released</Font14>
+                    <Font14>
+                      {moment(release_date).format('d MMMM, YYYY')}
+                    </Font14>
+                  </DetailColItem>
+                </Row>
+
+                <SubtitleText>{subtitle} </SubtitleText>
+                <DescriptionText>{full_description}</DescriptionText>
+              </DetailCol>
+            </DetailRow>
+            {actualCopiesAvailable !== 0 && (
+              <AddToCartBtnWrap
+                onClick={() => addToCart(data.book || {}, cartData, setCartData)}
+              >
+                <CartSvg />
+                <Col>
+                  <Font12 fontWeight="bold" color="white">
+                    Add to Cart
+                  </Font12>
+                  <Font12 color="#65C100">
+                    {actualCopiesAvailable} Copies Available
+                  </Font12>
+                </Col>
+                <Font28 fontWeight="300" color="white">
+                  ${price}
+                </Font28>
+              </AddToCartBtnWrap>
+            )}
+          </DetailCont>
+        );
+      
+      
+      }}
+    </Query>
   );
 }
 

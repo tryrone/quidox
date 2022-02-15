@@ -56,11 +56,11 @@ export const Checkoutbtn = () => {
     </BtnWrap>
   );
 }
-export const AddToCartBtn = () => {
+export const AddToCartBtn = ({ onClick }) => {
   return (
-    <AddToCartBtnWrap>
+    <AddToCartBtnWrap onClick={onClick}>
       <CartSvg />
       <CheckoutText>Add to Cart</CheckoutText>
     </AddToCartBtnWrap>
   );
-}
+};

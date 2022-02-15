@@ -12,6 +12,7 @@ import {Checkoutbtn} from '../Buttons/index';
 import { AllBooksPadding, BookItem, BooksRow, HeadTitle, HeadTitleWrap } from '../../pages/Home';
 import { BookContext } from '../../context/BookContext';
 import NavBar from '../NavBar';
+import { availableCopiesAfterAddedToCart, removeFromCart } from '../../utils/helpers';
 
 const MobileModal = styled.div`
   position: fixed;
@@ -170,7 +171,9 @@ const CartHeadingText = styled.p`
   font-weight: normal;
   font-size: 14px;
   line-height: 16px;
-  text-align: right;
+  text-align: ${({ textAlign }) => textAlign || 'right'};
+  margin-top: ${({ marginTop }) => marginTop || '0px'};
+  margin-bottom: ${({ marginBottom }) => marginBottom || '0px'};
   margin-right: 10px;
 `;
 
@@ -313,8 +316,8 @@ export const SearchModal = ({visible,setVisible}) => {
 
         <Row width="80%">
           <WebSearchInput
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            // value={searchText}
+            // onChange={(e) => setSearchText(e.target.value)}
             placeholder="Books, genres, authors, etc."
           />
           <SearchBtn onClick={() => setSearchText('')} >{searchText ? <CloseSvg /> : <Search />}</SearchBtn>
@@ -376,52 +379,89 @@ export const WebSearchModal = ({ visible }) => {
   );
 };
 
-const CartItem = () => {
+const CartItem = ({data,index}) => {
+  const {title,authors,quantity,price,image_url} = data;
+  const { setCartData ,cartData} = useContext(BookContext);
+
   return (
     <CartItemWrap>
-      <Row alignItems="inital" jc="space-between">
-        <CartImage src={require('../../assets/images/ee.png')} />
+      <Row width="40%" alignItems="inital" jc="space-between">
+        <CartImage src={image_url} />
         <Col jc="space-between">
           <Col>
-            <CartItemTitle width="80%">The Effective engineer</CartItemTitle>
-            <CartItemAuthor>Edmond Lau</CartItemAuthor>
+            <CartItemTitle>{title}</CartItemTitle>
+            <CartItemAuthor>
+              {authors.map(
+                (author, index) =>
+                  `${author?.name} ${index === authors.length - 1 ? '' : ' ,'}`
+              )}
+            </CartItemAuthor>
           </Col>
 
-          <Remove>Remove</Remove>
+          <Remove onClick={() => removeFromCart(cartData, data, setCartData)}>
+            Remove
+          </Remove>
         </Col>
       </Row>
 
       <Col jc="space-between">
         <Col>
-          <CartItemPrice>$29.99</CartItemPrice>
-          <CartCounter />
+          <CartItemPrice>${price}</CartItemPrice>
+          <CartCounter quantity={quantity} data={data} index={index} />
         </Col>
 
-        <CartItemTitle mt="17px" textAlign="right">$59.98</CartItemTitle>
+        <CartItemTitle mt="17px" textAlign="right">
+          ${(parseFloat(quantity) * parseFloat(price)).toFixed(2)}
+        </CartItemTitle>
       </Col>
     </CartItemWrap>
   );
 }
 
-const CartCounter = () => {
+const CartCounter = ({ quantity ,data , index}) => {
+  const { setCartData, cartData } = useContext(BookContext);
+  const {available_copies } = data;
+  const actualCopiesAvailable = parseInt(available_copies) - availableCopiesAfterAddedToCart(cartData,data);
+  
+  
+  const decreaseQuantity = () => {
+    if (parseInt(quantity) === 1){
+      const filteredOutItemFromCart = cartData.filter(
+        (cartItem) => cartItem?.id !== data.id
+      );
+      setCartData(filteredOutItemFromCart);
+    }else{
+      const cartCopy = [...cartData];
+      cartCopy[index].quantity = cartCopy[index].quantity - 1;
+      setCartData(cartCopy);
+    }
+  }
+  const increaseQuantity = () => {
+    if (actualCopiesAvailable === 0) return;
+    const cartCopy = [...cartData];
+    cartCopy[index].quantity = cartCopy[index].quantity + 1;
+    setCartData(cartCopy);
+  }
   return (
     <Row mt="5px">
-      <CounterBox br bl bg>
+      <CounterBox onClick={decreaseQuantity} br bl bg>
         <MinusSvg />
       </CounterBox>
       <CounterBox>
-        <QuantityText>2</QuantityText>
+        <QuantityText>{quantity}</QuantityText>
       </CounterBox>
-      <CounterBox br bl bg>
+      <CounterBox onClick={increaseQuantity} br bl bg>
         <PlusSvg />
       </CounterBox>
     </Row>
   );
-}
+};
 
 
 export const CartModal = ({visible,setVisible}) => {
   const searchHeader = React.createRef();
+  const { cartData } = useContext(BookContext);
+
 
   useEffect(() => {
     gsap.fromTo(searchHeader.current, { x: 500 }, { x: 0 });
@@ -434,11 +474,23 @@ export const CartModal = ({visible,setVisible}) => {
     }, 400);
   };
 
+  const calculateSubTotal = () => {
+     const individualSums = [0,0];
+     cartData.map((item) => {
+       const total = parseFloat(item.quantity) * parseFloat(item.price);
+       individualSums.push(total);
+     });
+     const sum = individualSums.reduce((a, b) => a + b);
+    return sum.toFixed(2);
+  }
+
+  
+
+  
+
   return (
     <CartModalWrap visible={visible}>
-      <CartCont
-        ref={searchHeader}
-      >
+      <CartCont ref={searchHeader}>
         <CartNavCont>
           <Row onClick={handleClose}>
             <ArrowWrap />
@@ -452,15 +504,33 @@ export const CartModal = ({visible,setVisible}) => {
         </CartNavCont>
 
         <CartPadding>
-          <CartItem />
-          <SubtotalWrap>
-            <Row width="100%" jc="space-between">
-              <SubtotalText>Subtotal</SubtotalText>
-              <SubtotalAmount>$94.76</SubtotalAmount>
-            </Row>
-          </SubtotalWrap>
+          {cartData.map((item, index) => {
+            return (
+              <CartItem key={item.id + 'cartItem'} data={item} index={index} />
+            );
+          })}
+          {cartData.length === 0 && (
+            <CartHeadingText
+              textAlign="center"
+              marginBottom="30%"
+              marginTop="30%"
+            >
+              You have no items in your cart
+            </CartHeadingText>
+          )}
 
-          <Checkoutbtn />
+          {cartData.length !== 0 && (
+            <>
+              <SubtotalWrap>
+                <Row width="100%" jc="space-between">
+                  <SubtotalText>Subtotal</SubtotalText>
+                  <SubtotalAmount>${calculateSubTotal()}</SubtotalAmount>
+                </Row>
+              </SubtotalWrap>
+
+              <Checkoutbtn />
+            </>
+          )}
         </CartPadding>
       </CartCont>
     </CartModalWrap>

@@ -169,7 +169,8 @@ const MobileSearch = styled(Search)`
 
 
 const NavBar = () => {
-  const { setSearchModal, setCartModal, searchText,setSearchText } = useContext(BookContext);
+  const { setSearchModal, setCartModal, searchText,setSearchText, cartData } = useContext(BookContext);
+  
   return (
     <NavWrapper>
       <Link to="/">
@@ -185,8 +186,8 @@ const NavBar = () => {
       <SearchWrap>
         <Row width="70%">
           <WebSearchInput
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            // value={searchText}
+            // onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search books, genres, authors, etc."
           />
           <SearchBtn onClick={() => setSearchText('')}>
@@ -204,9 +205,11 @@ const NavBar = () => {
         <BookSvg />
         <CartWrap onClick={() => setCartModal(true)}>
           <CartIcon />
-          <CartTotalWrap>
-            <CartTotalText>3</CartTotalText>
-          </CartTotalWrap>
+          {cartData.length !== 0 && (
+            <CartTotalWrap>
+              <CartTotalText>{cartData.length}</CartTotalText>
+            </CartTotalWrap>
+          )}
         </CartWrap>
       </Row>
     </NavWrapper>

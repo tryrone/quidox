@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import styled from 'styled-components';
 import Carousel from 'nuka-carousel';
 import { sizeInt, size } from '../utils/constants';
@@ -9,6 +9,12 @@ import { ReactComponent as HeartSvg } from '../assets/svgs/heart.svg';
 import { ReactComponent as CartSvg } from '../assets/svgs/smallCart.svg';
 import { useViewport } from '../utils/hooks';
 import StarRatings from 'react-star-ratings';
+import {Query} from 'react-apollo'
+import { GET_BOOKS } from '../graphql/queries';
+import { BookContext } from '../context/BookContext';
+import { addToCart, availableCopiesAfterAddedToCart } from '../utils/helpers';
+import { Link } from 'react-router-dom';
+
 
 
 
@@ -33,6 +39,9 @@ export const HeadTitleWrap = styled.div`
   padding: 0px 0px 14px 0px;
   border-bottom: 1px solid #eeeeee;
   margin-bottom: 23px;
+  @media (max-width: ${size.mobileL}) {
+    margin-bottom: 0px;
+  }
 `;
 
 const Padded = styled.div`
@@ -46,6 +55,11 @@ export const AllBooksPadding = styled.div`
   margin-top: ${({ mt }) => mt || '65px'};
   background-color: white;
   height: ${({ height }) => height || 'auto'};
+
+  @media (max-width: ${size.mobileL}) {
+    padding: 0px 19px;
+    margin-top: 29px;
+  }
 `;
 
 const SwiperPrevBtn = styled.div`
@@ -94,7 +108,7 @@ const SwiperNextBtn = styled.div`
 
 const ImageCard = styled.img`
   height: 324px;
-  object-fit: contain;
+  object-fit: cover;
   @media (max-width: ${size.mobileL}) {
     height: 221px;
     width: 134px;
@@ -151,7 +165,7 @@ const BookWrap = styled.div`
 const BookImage = styled.img`
   height: 183px;
   width: 110px;
-  object-fit: cover;
+  object-fit: fill;
   margin-right: 13px;
 `;
 
@@ -196,183 +210,212 @@ const Fontmd = styled.p`
   margin-left: ${({ml}) => ml || '0px'};
 `;
 
-const BookPreviewOverlay = styled.div`
-  height: 99%;
-  width: 90%;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.607988) 0%, #000000 79.7%);
-  position: absolute;
-  top:0;
-  left:0;
-  @media (max-width: ${size.mobileL}) {
-   height: 89%;
-   width: 91%;
-   top:10px;
-  }
-  @media (min-width: ${size.laptopL}) {
-   height: 99%;
-   width: 92%;
-   top:0;
-  }
-  @media (min-width: ${size.laptopL}) and (max-width: ${size.desktop}) {
-   height: 99%;
-   width: 80%;
-   top:0;
-  }
-`;
-const BookPreviewWrap = styled.div`
-  position: relative;
-`;
+// const BookPreviewOverlay = styled.div`
+//   height: 99%;
+//   width: 90%;
+//   background: linear-gradient(180deg, rgba(0, 0, 0, 0.607988) 0%, #000000 79.7%);
+//   position: absolute;
+//   top:0;
+//   left:0;
+//   @media (max-width: ${size.mobileL}) {
+//    height: 89%;
+//    width: 91%;
+//    top:10px;
+//   }
+//   @media (min-width: ${size.laptopL}) {
+//    height: 99%;
+//    width: 92%;
+//    top:0;
+//   }
+//   @media (min-width: ${size.laptopL}) and (max-width: ${size.desktop}) {
+//    height: 99%;
+//    width: 80%;
+//    top:0;
+//   }
+// `;
+
+// const BookPreviewWrap = styled.div`
+//   position: relative;
+// `;
 
 
-export const BookItem = ({mt}) => {
+export const BookItem = ({mt,data}) => {
+  const {
+    image_url,
+    title,
+    rating,
+    price,
+    available_copies,
+    likes,
+    number_of_purchases,
+    published_at,
+    authors,
+    genres,
+  } = data;
+
+  const { cartData, setCartData } = useContext(BookContext);
+
+  const publishedDate = new Date(published_at);
+
+  const actualCopiesAvailable = parseInt(available_copies) - availableCopiesAfterAddedToCart(cartData,data);
+
+
   return (
     <BookWrap mt={mt}>
-      <BookImage src={require('../assets/images/ee.png')} />
-      <Col>
-        <BookTitle>The Effective Engineer</BookTitle>
-        <BookAuthor mt="6px">Jim Collins, Jerry I. Porras - 2001</BookAuthor>
-        <BookAuthor>Business, Entrepreneurship</BookAuthor>
+      <Link to={`/details/${data.id}`}>
+        <BookImage src={image_url} />
+      </Link>
 
-        <Row mt="12px">
-          <Row br pr="14px">
-            <Col>
-              <PeopleSvg />
-              <Fontmd>13</Fontmd>
-            </Col>
+      <Link to={`/details/${data.id}`}>
+        <Col>
+          <BookTitle>{title}</BookTitle>
+          <BookAuthor mt="6px">
+            {authors.map(
+              (author, index) =>
+                `${author?.name} ${index === authors.length - 1 ? '' : ' ,'}`
+            )}{' '}
+            - {publishedDate.getFullYear()}
+          </BookAuthor>
+          <BookAuthor>
+            {genres.map(
+              (genre, index) =>
+                `${genre?.name} ${index === genres.length - 1 ? '' : ' ,'}`
+            )}
+          </BookAuthor>
 
-            <Col>
-              <HeartSvg />
-              <Fontmd>29</Fontmd>
+          <Row mt="12px">
+            <Row br pr="14px">
+              <Col>
+                <PeopleSvg />
+                <Fontmd>{number_of_purchases}</Fontmd>
+              </Col>
+
+              <Col>
+                <HeartSvg />
+                <Fontmd>{likes}</Fontmd>
+              </Col>
+            </Row>
+
+            <Col ml="10px">
+              <Fontmd textAlign="left">Rating:{rating} </Fontmd>
+              <StarRatings
+                rating={rating}
+                starRatedColor="#EBA430"
+                numberOfStars={5}
+                starDimension={'15px'}
+                starSpacing="2px"
+                name="rating"
+              />
             </Col>
           </Row>
 
-          <Col ml="10px">
-            <Fontmd textAlign="left">Rating: 4.0 </Fontmd>
-            <StarRatings
-              rating={4}
-              starRatedColor="#EBA430"
-              numberOfStars={5}
-              starDimension={'15px'}
-              starSpacing="2px"
-              name="rating"
-            />
-          </Col>
-        </Row>
+          <Row mt="13px">
+            <Fontmd>${price}</Fontmd>
+            <Fontmd
+              ml="6px"
+              color={actualCopiesAvailable !== 0 ? '#65C100' : ' #C12300'}
+            >
+              {actualCopiesAvailable !== 0
+                ? `${actualCopiesAvailable} Copies Available`
+                : 'Out of stock'}
+            </Fontmd>
+          </Row>
 
-        <Row mt="13px">
-          <Fontmd>$29.99</Fontmd>
-          <Fontmd ml="6px" color="#65C100">
-            23 Copies Available
-          </Fontmd>
-        </Row>
+          {actualCopiesAvailable !== 0 && (
+            <Row
+              onClick={() => addToCart(data || {}, cartData, setCartData)}
+              mt="10px"
+            >
+              <CartSvg />
 
-        <Row mt="10px">
-          <CartSvg />
-          <Fontmd fontWeight="bold" ml="6px">Add to Cart</Fontmd>
-        </Row>
-      </Col>
+              <Fontmd fontWeight="bold" ml="6px">
+                Add to Cart
+              </Fontmd>
+            </Row>
+          )}
+        </Col>
+      </Link>
     </BookWrap>
   );
 };
 
 const Home = () => {    
+  const {setBookData} = useContext(BookContext);
+
   const { width } = useViewport();  
-  return (
-    <HomeHeadCont>
-      <Padded>
-        <HeadTitleWrap>
-          <HeadTitle>Featured Books</HeadTitle>
-        </HeadTitleWrap>
-      </Padded>
+    return(
+    <Query query={GET_BOOKS}>
+      {({loading,error,data}) => {
+      setBookData(data?.books);
+      return loading && error ? (
+        <></>
+      ) : (
+        <HomeHeadCont>
+          <Padded>
+            <HeadTitleWrap>
+              <HeadTitle>Featured Books</HeadTitle>
+            </HeadTitleWrap>
+          </Padded>
 
-      <Carousel
-        cellSpacing={
-          width >= sizeInt.mobileL && width <= sizeInt.tablet ? 15 
-          : width >= sizeInt.laptopL && width <= sizeInt.desktop ? 100
-          : 5}
-        initialSlideWidth={220}
-        wrapAround
-        autoplay
-        slidesToShow={
-          width >= sizeInt.laptopL && width <= sizeInt.desktop
-            ? 7
-            : width >= parseInt(sizeInt.laptopL)
-            ? 8
-            : width >= sizeInt.laptop && width <= sizeInt.laptopL
-            ? 4.5
-            : width >= sizeInt.tablet && width <= sizeInt.laptopL
-            ? 3
-            : width >= sizeInt.mobileL && width <= sizeInt.tablet
-            ? 2.3
-            : 2.5
-        }
-        slidesToScroll={1}
-        renderCenterLeftControls={({ previousSlide }) => (
-          <SwiperPrevBtn onClick={previousSlide}>
-            <PrevSvg />
-          </SwiperPrevBtn>
-        )}
-        renderCenterRightControls={({ nextSlide }) => (
-          <SwiperNextBtn onClick={nextSlide}>
-            <NextSvg />
-          </SwiperNextBtn>
-        )}
-      >
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        <BookPreviewWrap>
-          <ImageCard src={require('../assets/images/ee.png')} />
-        </BookPreviewWrap>
-        {/* <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} />
-        <ImageCard src={require('../assets/images/ee.png')} /> */}
-      </Carousel>
+          <Carousel
+            cellSpacing={
+              width >= sizeInt.mobileL && width <= sizeInt.tablet
+                ? 15
+                : width >= sizeInt.laptopL && width <= sizeInt.desktop
+                ? 100
+                : 5
+            }
+            initialSlideWidth={220}
+            wrapAround
+            autoplay
+            slidesToShow={
+              width >= sizeInt.laptopL && width <= sizeInt.desktop
+                ? 7
+                : width >= parseInt(sizeInt.laptopL)
+                ? 8
+                : width >= sizeInt.laptop && width <= sizeInt.laptopL
+                ? 4.5
+                : width >= sizeInt.tablet && width <= sizeInt.laptopL
+                ? 3
+                : width >= sizeInt.mobileL && width <= sizeInt.tablet
+                ? 2.3
+                : 2.5
+            }
+            slidesToScroll={1}
+            renderCenterLeftControls={({ previousSlide }) => (
+              <SwiperPrevBtn onClick={previousSlide}>
+                <PrevSvg />
+              </SwiperPrevBtn>
+            )}
+            renderCenterRightControls={({ nextSlide }) => (
+              <SwiperNextBtn onClick={nextSlide}>
+                <NextSvg />
+              </SwiperNextBtn>
+            )}
+          >
+            {data?.books?.map((book) => {
+              return (
+                <ImageCard key={book.id + 'featured'} src={book.image_url} />
+              );
+            })}
+          </Carousel>
 
-      <AllBooksPadding>
-        <HeadTitleWrap>
-          <HeadTitle>All Books</HeadTitle>
-        </HeadTitleWrap>
+          <AllBooksPadding>
+            <HeadTitleWrap>
+              <HeadTitle>All Books</HeadTitle>
+            </HeadTitleWrap>
 
-        <BooksRow jc="space-between" wrap>
-          <BookItem />
-          <BookItem />
-          <BookItem />
-          <BookItem />
-          <BookItem />
-          <BookItem />
-        </BooksRow>
-      </AllBooksPadding>
-    </HomeHeadCont>
-  );
+            <BooksRow jc="space-between" wrap>
+              {data?.books?.map((book) => {
+                return(<BookItem key={book.id} data={book} />);
+              })}
+              <BookWrap/>
+            </BooksRow>
+          </AllBooksPadding>
+        </HomeHeadCont>
+      );
+      }}
+    </Query>)
 }
 
-export default Home
+export default Home;
