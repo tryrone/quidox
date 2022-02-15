@@ -1,6 +1,24 @@
-# Getting Started with Create React App
+## After cloning
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+In the project directory you can run:
+
+### `yarn install or npm install` 
+
+to install dependencies
+
+##  Assumptions regarding assessment
+
+for a small project like this I used context api for the state management instead of redux,
+also to show empty states i went ahead to use text explanation instead to images.
+
+## Requirments not covered
+
+I met all functional requirements apart from a particular hover animation that is seen when hovering an image , because I ran put of time.
+
+## Issues faced while completing the assignment
+
+the most difficult issue i faced was the filtering , it took me a while to figure it out, but figure it out i did.
+I also struggled a bit to find the right customisable carousel to use.
 
 ## Available Scripts
 
