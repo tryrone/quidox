@@ -41,6 +41,7 @@ export const HeadTitleWrap = styled.div`
   margin-bottom: 23px;
   @media (max-width: ${size.mobileL}) {
     margin-bottom: 0px;
+    margin-top: 60px;
   }
 `;
 
